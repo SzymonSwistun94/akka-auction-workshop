@@ -8,7 +8,7 @@ You will build an application that will handle bidding on auction items (called 
 
 ## Domain overview
 
-For this application we'll use only limited set of features that would otherwise be needed for a full-fledged aution app. The focus should be on technology.
+For this application we'll implement only limited set of features that would otherwise be needed for a full-fledged aution app. The focus should be on technology.
 
 ### General rules
 - There can be multiple auctions with multiple items.
