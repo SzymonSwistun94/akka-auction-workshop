@@ -29,7 +29,8 @@ For this application we'll implement only limited set of features that would oth
 
 ### Additional tasks:
 
-TODO
+- Implement Part 1 using [Akka Typed](https://doc.akka.io/docs/akka/current/typed/index.html)
+- Implement AuctionActor as a [router](https://doc.akka.io/docs/akka/current/routing.html#how-routing-is-designed-within-akka)
 
 ## Part 2
 
