@@ -6,7 +6,7 @@ This assignment is meant to help you start with Akka in general and Actors in pa
 
 You will build an application that will handle bidding on auction items (called lots). Auctions and Lots will be represented as Actors. In the next steps you will add Akka Persistence to preserve actor's state and Akka HTTP to build an API.
 
-## Domain overview
+## Domain Overview
 
 For this application we'll implement only limited set of features that would otherwise be needed for a full-fledged aution app. The focus should be on technology.
 
@@ -24,7 +24,7 @@ For this application we'll implement only limited set of features that would oth
 
 ## Part 1
 
-1. Create LotActor representing a lot, that will implement the bidding logic from the Overview.
+1. Create LotActor representing a lot, that will implement the bidding logic from the Domain Overview.
 2. Create AuctionActor representing an auction. Should be implemented as FSM. There are three possible states: Closed, InProgress and Finished. Should support adding and removing lots but only when Closed. Should allow bidding only when InProgress.
 
 ### Additional tasks:
