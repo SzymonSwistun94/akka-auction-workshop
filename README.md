@@ -8,7 +8,7 @@ You will build an application that will handle bidding on auction items (called 
 
 ## Domain Overview
 
-For this application we'll implement only limited set of features that would otherwise be needed for a full-fledged aution app. The focus should be on technology.
+For this application we'll implement only limited set of features that would otherwise be needed for a full-fledged auction app. The focus should be on technology.
 
 ### General rules
 - There can be multiple auctions with multiple items.
@@ -16,6 +16,7 @@ For this application we'll implement only limited set of features that would oth
 - One lot can be in only one auction.
 - The auction can be started and ended but not restarted.
 - To be able to bid on lots, the auction has to be started.
+- checkout master as your master branch (e.g. jan-kowalski) and branch out from your master branch and merge to it (jan-kowalski -> jan-kowalski-part1 -> jan-kowalski)
 
 ### Bidding
 - The new bid has to be greater than the current bid.
@@ -27,9 +28,9 @@ For this application we'll implement only limited set of features that would oth
 1. Create LotActor representing a lot, that will implement the bidding logic from the Domain Overview.
 2. Create AuctionActor representing an auction. Should be implemented as FSM. There are three possible states: Closed, InProgress and Finished. Should support adding and removing lots but only when Closed. Should allow bidding only when InProgress.
 
+Use Akka Typed
 ### Additional tasks:
 
-- Implement Part 1 using [Akka Typed](https://doc.akka.io/docs/akka/current/typed/index.html)
 - Implement AuctionActor as a [router](https://doc.akka.io/docs/akka/current/routing.html#how-routing-is-designed-within-akka)
 
 ## Part 2
