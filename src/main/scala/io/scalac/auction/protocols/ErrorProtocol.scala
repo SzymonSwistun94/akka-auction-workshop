@@ -8,4 +8,6 @@ case class InvalidActorState(override val sender: ActorRef[GeneralProtocol]) ext
 case class InvalidStateTransition(override val sender: ActorRef[GeneralProtocol]) extends ErrorProtocol(sender)
 case class LotAlreadyExists(override val sender: ActorRef[GeneralProtocol], name: String) extends ErrorProtocol(sender)
 case class LotNotFound(override val sender: ActorRef[GeneralProtocol], name: String) extends ErrorProtocol(sender)
+case class AuctionAlreadyExists(override val sender: ActorRef[GeneralProtocol], name: String) extends ErrorProtocol(sender)
+case class AuctionNotFound(override val sender: ActorRef[GeneralProtocol], name: String) extends ErrorProtocol(sender)
 case class AccessDenied(override val sender: ActorRef[GeneralProtocol]) extends ErrorProtocol(sender)
