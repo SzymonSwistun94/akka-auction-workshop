@@ -10,11 +10,11 @@ object LotActor {
   Routees
   def apply(): Behavior[GeneralProtocol] = Behaviors.receive { (context, message) =>
     message match {
-      case CreateLot(sender, name, description) =>
+      case CreateLot(sender, _, name, description) =>
         sender ! LotStateMessage(context.self, LotState.CLOSED)
         closed(name, description)
       case msg: GeneralProtocol =>
-        msg.sender ! MessageRejected(context.self, "Invalid actor state")
+        msg.sender ! InvalidActorState(context.self)
         Behaviors.same
     }
   }
@@ -30,7 +30,7 @@ object LotActor {
       case GetLotState(sender) =>
         sender ! LotStateMessage(context.self, LotState.CLOSED)
         Behaviors.same
-      case GetLotData(sender) =>
+      case GetLotData(sender, _, _) =>
         sender ! LotData(context.self, title, description)
         Behaviors.same
       case SetLotState(sender, state) => state match {
@@ -41,11 +41,11 @@ object LotActor {
           sender ! LotStateMessage(context.self, LotState.OPEN)
           open(title, description, None)
         case _ =>
-          sender ! MessageRejected(context.self, "Invalid state transition")
+          sender ! InvalidStateTransition(context.self)
           Behaviors.same
       }
       case msg: GeneralProtocol =>
-        msg.sender ! MessageRejected(context.self, "Invalid actor state")
+        msg.sender ! InvalidActorState(context.self)
         Behaviors.same
     }
   }
@@ -55,7 +55,7 @@ object LotActor {
       case GetLotState(sender) =>
         sender ! LotStateMessage(context.self, LotState.IN_PREVIEW)
         Behaviors.same
-      case GetLotData(sender) =>
+      case GetLotData(sender, _, _) =>
         sender ! LotData(context.self, title, description)
         Behaviors.same
       case SetLotState(sender, state) => state match {
@@ -66,11 +66,11 @@ object LotActor {
           sender ! LotStateMessage(context.self, LotState.OPEN)
           open(title, description, None)
         case _ =>
-          sender ! MessageRejected(context.self, "Invalid state transition")
+          sender ! InvalidStateTransition(context.self)
           Behaviors.same
       }
       case msg: GeneralProtocol =>
-        msg.sender ! MessageRejected(context.self, "Invalid actor state")
+        msg.sender ! InvalidActorState(context.self)
         Behaviors.same
     }
   }
@@ -80,10 +80,10 @@ object LotActor {
       case GetLotState(sender) =>
         sender ! LotStateMessage(context.self, LotState.OPEN)
         Behaviors.same
-      case GetLotData(sender) =>
+      case GetLotData(sender, _, _) =>
         sender ! LotData(context.self, title, description, highestBid)
         Behaviors.same
-      case PlaceBid(sender, _, bid) =>
+      case PlaceBid(sender, _, _, bid) =>
         highestBid match {
           case Some(highest) if bid.value <= highest.value =>
             sender ! BidFailure(context.self, title)
@@ -97,11 +97,11 @@ object LotActor {
           sender ! LotStateMessage(context.self, LotState.FINISHED)
           finished(title, description, highestBid)
         case _ =>
-          sender ! MessageRejected(context.self, "Invalid state transition")
+          sender ! InvalidStateTransition(context.self)
           Behaviors.same
       }
       case msg: GeneralProtocol =>
-        msg.sender ! MessageRejected(context.self, "Invalid actor state")
+        msg.sender ! InvalidActorState(context.self)
         Behaviors.same
     }
   }
@@ -111,14 +111,14 @@ object LotActor {
       case GetLotState(sender) =>
         sender ! LotStateMessage(context.self, LotState.FINISHED)
         Behaviors.same
-      case GetLotData(sender) =>
+      case GetLotData(sender, _, _) =>
         sender ! LotData(context.self, title, description, highestBid)
         Behaviors.same
       case SetLotState(sender, _) =>
-        sender ! MessageRejected(context.self, "Invalid state transition")
+        sender ! InvalidStateTransition(context.self)
         Behaviors.same
       case msg: GeneralProtocol =>
-        msg.sender ! MessageRejected(context.self, "Invalid actor state")
+        msg.sender ! InvalidActorState(context.self)
         Behaviors.same
     }
   }

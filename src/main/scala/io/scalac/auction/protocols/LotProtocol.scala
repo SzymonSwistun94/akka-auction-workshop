@@ -7,7 +7,6 @@ sealed class LotProtocol(sender: ActorRef[GeneralProtocol]) extends GeneralProto
 
 // query
 
-case class GetLotData(override val sender: ActorRef[GeneralProtocol]) extends LotProtocol(sender)
 case class GetLotState(override val sender: ActorRef[GeneralProtocol]) extends LotProtocol(sender)
 
 case class AlterLot(override val sender: ActorRef[GeneralProtocol], maybeTitle: Option[String] = None, maybeDescription: Option[String] = None) extends LotProtocol(sender)
@@ -15,7 +14,6 @@ case class SetLotState(override val sender: ActorRef[GeneralProtocol], state: Lo
 
 // response
 
-case class LotData(override val sender: ActorRef[GeneralProtocol], name: String, description: String, maybeBid: Option[Bid] = None) extends LotProtocol(sender)
 case class LotStateMessage(override val sender: ActorRef[GeneralProtocol], state: LotState.Value) extends LotProtocol(sender)
 
 case class BidSuccess(override val sender: ActorRef[GeneralProtocol], lotName: String, bid: Bid) extends LotProtocol(sender)

@@ -5,12 +5,14 @@ import java.time.Instant
 import akka.actor.typed.ActorRef
 
 sealed class AuctionProtocol(sender: ActorRef[GeneralProtocol]) extends GeneralProtocol(sender)
+sealed class AuctionQuery(sender: ActorRef[GeneralProtocol], override val userId: String) extends AuctionProtocol(sender) with AccessControl
 
 // query
 
-case class GetAuctionData(override val sender: ActorRef[GeneralProtocol]) extends AuctionProtocol(sender)
-case class AlterAuction(override val sender: ActorRef[GeneralProtocol], title: Option[String] = None, startTime: Option[Instant] = None, endTime: Option[Instant] = None) extends AuctionProtocol(sender)
-case class SetAuctionState(override val sender: ActorRef[GeneralProtocol], state: AuctionState.Value) extends AuctionProtocol(sender)
+case class GetAuctionData(override val sender: ActorRef[GeneralProtocol], override val userId: String) extends AuctionQuery(sender, userId)
+case class GetAuctionState(override val sender: ActorRef[GeneralProtocol], override val userId: String) extends AuctionQuery(sender, userId)
+case class AlterAuction(override val sender: ActorRef[GeneralProtocol], override val userId: String, title: Option[String] = None, startTime: Option[Instant] = None, endTime: Option[Instant] = None) extends AuctionQuery(sender, userId)
+case class SetAuctionState(override val sender: ActorRef[GeneralProtocol], override val userId: String, state: AuctionState.Value) extends AuctionQuery(sender, userId)
 
 // response
 
