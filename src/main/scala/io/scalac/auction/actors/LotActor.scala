@@ -2,7 +2,6 @@ package io.scalac.auction.actors
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
-import akka.routing.Routees
 import io.scalac.auction.models.Bid
 import io.scalac.auction.protocols._
 
@@ -13,9 +12,9 @@ object LotActor {
   def apply(): Behavior[GeneralProtocol] = Behaviors.receive {
     (context, message) =>
       message match {
-        case CreateLot(sender, _, name, description) =>
+        case CreateLot(sender, _, _, lotName, description) =>
           sender ! LotStateMessage(context.self, LotState.Closed)
-          closed(name, description)
+          closed(lotName, description)
         case msg: GeneralProtocol =>
           msg.sender ! InvalidActorState(context.self)
           Behaviors.same
@@ -27,54 +26,50 @@ object LotActor {
   def closed(title: String, description: String): Behavior[GeneralProtocol] =
     Behaviors.receive { (context, message) =>
       message match {
-        case AlterLot(sender, maybeTitle, maybeDescription) =>
-          val curTitle = maybeTitle.getOrElse(title)
+        case AlterLot(sender, _, maybeDescription) =>
           val curDescription = maybeDescription.getOrElse(description)
 
-          sender ! LotData(context.self, curTitle, curDescription)
-          Behaviors.same
-        case GetLotState(sender) =>
-          sender ! LotStateMessage(context.self, LotState.Closed)
-          Behaviors.same
-        case GetLotData(sender, _, _) =>
-          sender ! LotData(context.self, title, description)
-          Behaviors.same
-        case SetLotState(sender, state) =>
-          state match {
-            case LotState.InPreview =>
-              sender ! LotStateMessage(context.self, LotState.InPreview)
-              inPreview(title, description)
-            case LotState.Open =>
-              sender ! LotStateMessage(context.self, LotState.Open)
-              open(title, description, None)
-            case _ =>
-              sender ! InvalidStateTransition(context.self)
-              Behaviors.same
-          }
-        case msg: GeneralProtocol =>
-          msg.sender ! InvalidActorState(context.self)
-          Behaviors.same
+        sender ! LotData(context.self, title, curDescription)
+        Behaviors.same
+      case GetLotState(sender) =>
+        sender ! LotStateMessage(context.self, title, LotState.Closed)
+        Behaviors.same
+      case GetLotData(sender, _, _, _) =>
+        sender ! LotData(context.self, title, description)
+        Behaviors.same
+      case SetLotState(sender, state) => state match {
+        case LotState.InPreview =>
+          sender ! LotStateMessage(context.self, title, LotState.InPreview)
+          inPreview(title, description)
+        case LotState.Open =>
+          sender ! LotStateMessage(context.self, title, LotState.Open)
+          open(title, description, None)
         case _ =>
+          sender ! InvalidStateTransition(context.self)
           Behaviors.same
       }
+      case msg: GeneralProtocol =>
+        msg.sender ! InvalidActorState(context.self)
+        Behaviors.same
     }
+  }
 
   def inPreview(title: String, description: String): Behavior[GeneralProtocol] =
     Behaviors.receive { (context, message) =>
       message match {
         case GetLotState(sender) =>
-          sender ! LotStateMessage(context.self, LotState.InPreview)
+          sender ! LotStateMessage(context.self, title, LotState.InPreview)
           Behaviors.same
-        case GetLotData(sender, _, _) =>
+        case GetLotData(sender, _, _, _) =>
           sender ! LotData(context.self, title, description)
           Behaviors.same
         case SetLotState(sender, state) =>
           state match {
             case LotState.Closed =>
-              sender ! LotStateMessage(context.self, LotState.Closed)
+              sender ! LotStateMessage(context.self, title, LotState.Closed)
               closed(title, description)
             case LotState.Open =>
-              sender ! LotStateMessage(context.self, LotState.Open)
+              sender ! LotStateMessage(context.self, title, LotState.Open)
               open(title, description, None)
             case _ =>
               sender ! InvalidStateTransition(context.self)
@@ -95,12 +90,12 @@ object LotActor {
   ): Behavior[GeneralProtocol] = Behaviors.receive { (context, message) =>
     message match {
       case GetLotState(sender) =>
-        sender ! LotStateMessage(context.self, LotState.Open)
+        sender ! LotStateMessage(context.self, title, LotState.Open)
         Behaviors.same
-      case GetLotData(sender, _, _) =>
+      case GetLotData(sender, _, _, _) =>
         sender ! LotData(context.self, title, description, highestBid)
         Behaviors.same
-      case PlaceBid(sender, _, _, bid) =>
+      case PlaceBid(sender, _, _, _, bid) =>
         highestBid match {
           case Some(highest) if bid.value <= highest.value * bidThreshold =>
             sender ! BidTooLow(context.self, title)
@@ -112,7 +107,7 @@ object LotActor {
       case SetLotState(sender, state) =>
         state match {
           case LotState.Finished =>
-            sender ! LotStateMessage(context.self, LotState.Finished)
+            sender ! LotStateMessage(context.self, title, LotState.Finished)
             finished(title, description, highestBid)
           case _ =>
             sender ! InvalidStateTransition(context.self)
@@ -133,9 +128,9 @@ object LotActor {
   ): Behavior[GeneralProtocol] = Behaviors.receive { (context, message) =>
     message match {
       case GetLotState(sender) =>
-        sender ! LotStateMessage(context.self, LotState.Finished)
+        sender ! LotStateMessage(context.self, title, LotState.Finished)
         Behaviors.same
-      case GetLotData(sender, _, _) =>
+      case GetLotData(sender, _, _, _) =>
         sender ! LotData(context.self, title, description, highestBid)
         Behaviors.same
       case SetLotState(sender, _) =>

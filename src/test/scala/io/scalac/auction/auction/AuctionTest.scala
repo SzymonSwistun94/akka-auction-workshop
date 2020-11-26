@@ -14,7 +14,10 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.language.postfixOps
 
-class AuctionTest extends AnyFlatSpec with BeforeAndAfterAll with Matchers {
+class AuctionTest
+  extends AnyFlatSpec
+    with BeforeAndAfterAll
+    with Matchers {
   val testkit: ActorTestKit = ActorTestKit()
 
   override def afterAll(): Unit = {
@@ -37,7 +40,7 @@ class AuctionTest extends AnyFlatSpec with BeforeAndAfterAll with Matchers {
 
     val expectedMessage = InvalidActorState(auctionActor)
     val callAndResponse = auctionStateValues.map(
-      SetAuctionState(probe.ref, "0", _) -> expectedMessage
+      SetAuctionState(probe.ref, "0", "", _) -> expectedMessage
     )
     testCallAndResponses(probe, auctionActor, callAndResponse)
     testkit.stop(auctionActor)
@@ -58,15 +61,15 @@ class AuctionTest extends AnyFlatSpec with BeforeAndAfterAll with Matchers {
         Instant.now.plus(1, ChronoUnit.DAYS)
       ) ::
         List(Scheduled, InPreview, InProgress, NearEnd, Finished).map(
-          SetAuctionState(probe.ref, "root", _)
+          SetAuctionState(probe.ref, "root", "test", _)
         )
     }
     testCallchain(
       probe,
       auctionActor1,
       chain1,
-      GetAuctionState(probe.ref, "root"),
-      AuctionStateMessage(auctionActor1, AuctionState.Finished)
+      GetAuctionState(probe.ref, "root", "test"),
+      AuctionStateMessage(auctionActor1, "test", AuctionState.Finished)
     )
     testkit.stop(auctionActor1)
 
@@ -81,14 +84,14 @@ class AuctionTest extends AnyFlatSpec with BeforeAndAfterAll with Matchers {
         Instant.now,
         Instant.now.plus(1, ChronoUnit.DAYS)
       ) ::
-        List(InProgress, Finished).map(SetAuctionState(probe.ref, "root", _))
+        List(InProgress, Finished).map(SetAuctionState(probe.ref, "root", "test2", _))
     }
     testCallchain(
       probe,
       auctionActor2,
       chain2,
-      GetAuctionState(probe.ref, "root"),
-      AuctionStateMessage(auctionActor2, AuctionState.Finished)
+      GetAuctionState(probe.ref, "root", "test2"),
+      AuctionStateMessage(auctionActor2, "test2", AuctionState.Finished)
     )
     testkit.stop(auctionActor2)
   }
@@ -106,22 +109,22 @@ class AuctionTest extends AnyFlatSpec with BeforeAndAfterAll with Matchers {
       Instant.now.plus(1, ChronoUnit.DAYS)
     )
     probe.expectMessage(
-      AuctionStateMessage(auctionActor, AuctionState.Unscheduled)
+      AuctionStateMessage(auctionActor, "test", AuctionState.Unscheduled)
     )
-    auctionActor ! CreateLot(probe.ref, "root", "testLot", "test")
+    auctionActor ! CreateLot(probe.ref, "root", "test", "testLot", "test")
     probe
       .receiveMessage()
       .asInstanceOf[LotStateMessage]
       .state shouldEqual LotState.Closed
-    auctionActor ! SetAuctionState(probe.ref, "root", AuctionState.InProgress)
+    auctionActor ! SetAuctionState(probe.ref, "root", "test", AuctionState.InProgress)
     probe.expectMessage(
-      AuctionStateMessage(auctionActor, AuctionState.InProgress)
+      AuctionStateMessage(auctionActor, "test", AuctionState.InProgress)
     )
     probe
       .receiveMessage()
       .asInstanceOf[LotStateMessage]
       .state shouldEqual LotState.Open
-    auctionActor ! PlaceBid(probe.ref, "root", "testLot", Bid("user", 1))
+    auctionActor ! PlaceBid(probe.ref, "root", "test", "testLot", Bid("user", 1))
     probe.receiveMessage().asInstanceOf[BidSuccess].bid shouldEqual Bid(
       "user",
       1
@@ -169,14 +172,14 @@ class AuctionTest extends AnyFlatSpec with BeforeAndAfterAll with Matchers {
       probe.ref,
       "root",
       "root",
-      "test2",
+      "test",
       Instant.now,
       Instant.now.plus(1, ChronoUnit.DAYS)
     )
     probe.expectMessage(
-      AuctionStateMessage(auctionActor, AuctionState.Unscheduled)
+      AuctionStateMessage(auctionActor, "test", AuctionState.Unscheduled)
     )
-    auctionActor ! SetAuctionState(probe.ref, "0", AuctionState.InProgress)
+    auctionActor ! SetAuctionState(probe.ref, "0", "test", AuctionState.InProgress)
     probe.expectMessage(AccessDenied(auctionActor))
 
     testkit.stop(auctionActor)

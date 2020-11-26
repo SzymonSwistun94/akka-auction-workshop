@@ -12,7 +12,7 @@ final case class GetLotState(sender: ActorRef[GeneralProtocol])
 
 final case class AlterLot(
     sender: ActorRef[GeneralProtocol],
-    maybeTitle: Option[String] = None,
+    maybeTitle: String,
     maybeDescription: Option[String] = None
 ) extends LotProtocol
 
@@ -22,8 +22,7 @@ final case class SetLotState(sender: ActorRef[GeneralProtocol], state: LotState)
 // response
 
 final case class LotStateMessage(
-    sender: ActorRef[GeneralProtocol],
-    state: LotState
+    sender: ActorRef[GeneralProtocol], name: String, state: LotState
 ) extends LotProtocol
 
 final case class BidSuccess(

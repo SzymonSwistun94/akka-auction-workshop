@@ -18,5 +18,7 @@ final case class LotAlreadyExists(
 final case class LotNotFound(sender: ActorRef[GeneralProtocol], name: String)
     extends ErrorProtocol
 
+final case class AuctionAlreadyExists(override val sender: ActorRef[GeneralProtocol], name: String) extends ErrorProtocol
+final case class AuctionNotFound(override val sender: ActorRef[GeneralProtocol], name: String) extends ErrorProtocol
 final case class AccessDenied(sender: ActorRef[GeneralProtocol])
     extends ErrorProtocol
