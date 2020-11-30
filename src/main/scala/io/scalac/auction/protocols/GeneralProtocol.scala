@@ -54,37 +54,48 @@ final case class GetLotData(
 ) extends LotQuery
 
 final case class GetAuctionData(
-    override val sender: ActorRef[GeneralProtocol],
-    override val userId: String,
-    override val auctionName: String
+    sender: ActorRef[GeneralProtocol],
+    userId: String,
+    auctionName: String
+) extends AuctionQuery
+final case class GetLotList(
+    sender: ActorRef[GeneralProtocol],
+    userId: String,
+    auctionName: String
 ) extends AuctionQuery
 
 final case class GetAuctionState(
-    override val sender: ActorRef[GeneralProtocol],
-    override val userId: String,
-    override val auctionName: String
+    sender: ActorRef[GeneralProtocol],
+    userId: String,
+    auctionName: String
 ) extends AuctionQuery
 
 final case class AlterAuction(
-    override val sender: ActorRef[GeneralProtocol],
-    override val userId: String,
-    override val auctionName: String,
+    sender: ActorRef[GeneralProtocol],
+    userId: String,
+    auctionName: String,
     startTime: Option[Instant] = None,
     endTime: Option[Instant] = None
 ) extends AuctionQuery
 
 final case class SetAuctionState(
-    override val sender: ActorRef[GeneralProtocol],
-    override val userId: String,
-    override val auctionName: String,
+    sender: ActorRef[GeneralProtocol],
+    userId: String,
+    auctionName: String,
     state: AuctionState
 ) extends AuctionQuery
+
+final case class GetAuctionsList(
+    sender: ActorRef[GeneralProtocol],
+    userId: String
+) extends GeneralQuery
 
 // response
 
 final case class LotData(
     sender: ActorRef[GeneralProtocol],
-    name: String,
+    auctionName: String,
+    lotName: String,
     description: String,
     maybeBid: Option[Bid] = None
 ) extends GeneralProtocol
@@ -93,7 +104,7 @@ final case class MessageRejected(sender: ActorRef[GeneralProtocol], msg: String)
     extends GeneralProtocol
 
 final case class AuctionData(
-    override val sender: ActorRef[GeneralProtocol],
+    sender: ActorRef[GeneralProtocol],
     owner: String,
     title: String,
     startTime: Instant,
@@ -102,7 +113,18 @@ final case class AuctionData(
 ) extends GeneralProtocol
 
 final case class AuctionStateMessage(
-    override val sender: ActorRef[GeneralProtocol],
+    sender: ActorRef[GeneralProtocol],
     name: String,
     state: AuctionState
+) extends GeneralProtocol
+
+final case class AuctionsList(
+    sender: ActorRef[GeneralProtocol],
+    auctions: List[String]
+) extends GeneralProtocol
+
+final case class LotList(
+    sender: ActorRef[GeneralProtocol],
+    auctionName: String,
+    lots: List[String]
 ) extends GeneralProtocol

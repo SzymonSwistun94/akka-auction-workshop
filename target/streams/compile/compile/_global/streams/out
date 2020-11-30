@@ -1,0 +1,51 @@
+[0m[[0m[0mdebug[0m] [0m[0mAcquiring lock on file /Users/szymonswistun/IdeaProjects/workshop-akka-actors/project/target/.sbt-compilation-infos/workshop-akka-actors-compile/.sbt-idea-lock ...[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/szymonswistun/IdeaProjects/workshop-akka-actors/src/main/scala/io/scalac/auction/actors/LotActor.scala:31:25: not enough arguments for method apply: (sender: akka.actor.typed.ActorRef[io.scalac.auction.protocols.GeneralProtocol], auctionName: String, lotName: String, description: String, maybeBid: Option[io.scalac.auction.models.Bid]): io.scalac.auction.protocols.LotData in object LotData.[0m
+[0m[[0m[31merror[0m] [0m[0mUnspecified value parameter description.[0m
+[0m[[0m[31merror[0m] [0m[0m        sender ! LotData(context.self, title, curDescription)[0m
+[0m[[0m[31merror[0m] [0m[0m                        ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/szymonswistun/IdeaProjects/workshop-akka-actors/src/main/scala/io/scalac/auction/actors/LotActor.scala:37:25: not enough arguments for method apply: (sender: akka.actor.typed.ActorRef[io.scalac.auction.protocols.GeneralProtocol], auctionName: String, lotName: String, description: String, maybeBid: Option[io.scalac.auction.models.Bid]): io.scalac.auction.protocols.LotData in object LotData.[0m
+[0m[[0m[31merror[0m] [0m[0mUnspecified value parameter description.[0m
+[0m[[0m[31merror[0m] [0m[0m        sender ! LotData(context.self, title, description)[0m
+[0m[[0m[31merror[0m] [0m[0m                        ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/szymonswistun/IdeaProjects/workshop-akka-actors/src/main/scala/io/scalac/auction/actors/LotActor.scala:63:27: not enough arguments for method apply: (sender: akka.actor.typed.ActorRef[io.scalac.auction.protocols.GeneralProtocol], auctionName: String, lotName: String, description: String, maybeBid: Option[io.scalac.auction.models.Bid]): io.scalac.auction.protocols.LotData in object LotData.[0m
+[0m[[0m[31merror[0m] [0m[0mUnspecified value parameter description.[0m
+[0m[[0m[31merror[0m] [0m[0m          sender ! LotData(context.self, title, description)[0m
+[0m[[0m[31merror[0m] [0m[0m                          ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/szymonswistun/IdeaProjects/workshop-akka-actors/src/main/scala/io/scalac/auction/actors/LotActor.scala:95:60: type mismatch;[0m
+[0m[[0m[31merror[0m] [0m[0m found   : Option[io.scalac.auction.models.Bid][0m
+[0m[[0m[31merror[0m] [0m[0m required: String[0m
+[0m[[0m[31merror[0m] [0m[0m        sender ! LotData(context.self, title, description, highestBid)[0m
+[0m[[0m[31merror[0m] [0m[0m                                                           ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/szymonswistun/IdeaProjects/workshop-akka-actors/src/main/scala/io/scalac/auction/actors/LotActor.scala:133:60: type mismatch;[0m
+[0m[[0m[31merror[0m] [0m[0m found   : Option[io.scalac.auction.models.Bid][0m
+[0m[[0m[31merror[0m] [0m[0m required: String[0m
+[0m[[0m[31merror[0m] [0m[0m        sender ! LotData(context.self, title, description, highestBid)[0m
+[0m[[0m[31merror[0m] [0m[0m                                                           ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/szymonswistun/IdeaProjects/workshop-akka-actors/src/main/scala/io/scalac/auction/services/ActorBasedAuctionService.scala:79:93: value IN_PROGRESS is not a member of object io.scalac.auction.protocols.AuctionState[0m
+[0m[[0m[31merror[0m] [0m[0m    overseerActor.ask[GeneralProtocol](SetAuctionState(_, userId, auctionName, AuctionState.IN_PROGRESS))[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                                            ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/szymonswistun/IdeaProjects/workshop-akka-actors/src/main/scala/io/scalac/auction/services/ActorBasedAuctionService.scala:81:53: value IN_PROGRESS is not a member of object io.scalac.auction.protocols.AuctionState[0m
+[0m[[0m[31merror[0m] [0m[0m        case AuctionStateMessage(_, _, AuctionState.IN_PROGRESS) =>[0m
+[0m[[0m[31merror[0m] [0m[0m                                                    ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/szymonswistun/IdeaProjects/workshop-akka-actors/src/main/scala/io/scalac/auction/services/ActorBasedAuctionService.scala:88:93: value IN_PROGRESS is not a member of object io.scalac.auction.protocols.AuctionState[0m
+[0m[[0m[31merror[0m] [0m[0m    overseerActor.ask[GeneralProtocol](SetAuctionState(_, userId, auctionName, AuctionState.IN_PROGRESS))[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                                            ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/szymonswistun/IdeaProjects/workshop-akka-actors/src/main/scala/io/scalac/auction/services/ActorBasedAuctionService.scala:90:53: value FINISHED is not a member of object io.scalac.auction.protocols.AuctionState[0m
+[0m[[0m[31merror[0m] [0m[0m        case AuctionStateMessage(_, _, AuctionState.FINISHED) =>[0m
+[0m[[0m[31merror[0m] [0m[0m                                                    ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/szymonswistun/IdeaProjects/workshop-akka-actors/src/main/scala/io/scalac/auction/services/ActorBasedAuctionService.scala:99:45: value CLOSED is not a member of object io.scalac.auction.protocols.LotState[0m
+[0m[[0m[31merror[0m] [0m[0m        case LotStateMessage(_, _, LotState.CLOSED) =>[0m
+[0m[[0m[31merror[0m] [0m[0m                                            ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/szymonswistun/IdeaProjects/workshop-akka-actors/src/main/scala/io/scalac/auction/services/ActorBasedAuctionService.scala:106:40: value name is not a member of io.scalac.auction.models.Lot[0m
+[0m[[0m[31merror[0m] [0m[0m    createLot(userId, auctionName, lot.name, lot.description)[0m
+[0m[[0m[31merror[0m] [0m[0m                                       ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/szymonswistun/IdeaProjects/workshop-akka-actors/src/main/scala/io/scalac/auction/services/ActorBasedAuctionService.scala:113:17: not found: type BidFailure[0m
+[0m[[0m[31merror[0m] [0m[0m        case _: BidFailure =>[0m
+[0m[[0m[31merror[0m] [0m[0m                ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/szymonswistun/IdeaProjects/workshop-akka-actors/src/main/scala/io/scalac/auction/services/ActorBasedAuctionService.scala:135:55: type mismatch;[0m
+[0m[[0m[31merror[0m] [0m[0m found   : Option[Double][0m
+[0m[[0m[31merror[0m] [0m[0m required: String[0m
+[0m[[0m[31merror[0m] [0m[0m          Right(Lot(lotName, description, maybeBid.map(_.value)))[0m
+[0m[[0m[31merror[0m] [0m[0m                                                      ^[0m
+[0m[[0m[31merror[0m] [0m[0m13 errors found[0m
+[0m[[0m[0mdebug[0m] [0m[0mReleasing lock on file /Users/szymonswistun/IdeaProjects/workshop-akka-actors/project/target/.sbt-compilation-infos/workshop-akka-actors-compile/.sbt-idea-lock.[0m

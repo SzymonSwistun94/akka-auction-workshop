@@ -12,8 +12,7 @@ object LotActor {
   def apply(): Behavior[GeneralProtocol] = Behaviors.receive {
     (context, message) =>
       message match {
-        case CreateLot(sender, _, _, lotName, description) =>
-          sender ! LotStateMessage(context.self, LotState.Closed)
+        case CreateLot(_, _, _, lotName, description) =>
           closed(lotName, description)
         case msg: GeneralProtocol =>
           msg.sender ! InvalidActorState(context.self)

@@ -51,7 +51,6 @@ class AuctionTest
 
     val auctionActor1 = testkit.spawn(AuctionActor(), "auction1")
     val chain1 = {
-      import AuctionState._
       CreateAuction(
         probe.ref,
         "root",
@@ -75,7 +74,6 @@ class AuctionTest
 
     val auctionActor2 = testkit.spawn(AuctionActor(), "auction2")
     val chain2 = {
-      import AuctionState._
       CreateAuction(
         probe.ref,
         "root",
