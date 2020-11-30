@@ -12,6 +12,9 @@ object OverseerActor {
   private def router(auctions: Map[String, ActorRef[GeneralProtocol]]): Behavior[GeneralProtocol] = Behaviors.receive {
     (context, message) =>
       message match {
+        case GetAuctionsList(sender, _) =>
+          sender ! AuctionsList(context.self, auctions.keys.toList)
+          Behaviors.same
         case query: AuctionQuery =>
           query match {
             case CreateAuction(sender, _, _, auctionName, _, _) =>
