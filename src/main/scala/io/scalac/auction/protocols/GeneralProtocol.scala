@@ -23,6 +23,8 @@ case class PlaceBid(override val sender: ActorRef[GeneralProtocol], override val
 
 case class GetLotData(override val sender: ActorRef[GeneralProtocol], override val userId: String, override val auctionName: String, override val lotName: String) extends LotQuery(sender, userId, auctionName, lotName)
 
+case class GetLotList(override val sender: ActorRef[GeneralProtocol], override val userId: String, override val auctionName: String) extends AuctionQuery(sender, userId, auctionName)
+
 case class GetAuctionData(override val sender: ActorRef[GeneralProtocol], override val userId: String, override val auctionName: String) extends AuctionQuery(sender, userId, auctionName)
 
 case class GetAuctionState(override val sender: ActorRef[GeneralProtocol], override val userId: String, override val auctionName: String) extends AuctionQuery(sender, userId, auctionName)
@@ -30,6 +32,8 @@ case class GetAuctionState(override val sender: ActorRef[GeneralProtocol], overr
 case class AlterAuction(override val sender: ActorRef[GeneralProtocol], override val userId: String, override val auctionName: String, startTime: Option[Instant] = None, endTime: Option[Instant] = None) extends AuctionQuery(sender, userId, auctionName)
 
 case class SetAuctionState(override val sender: ActorRef[GeneralProtocol], override val userId: String, override val auctionName: String, state: AuctionState.Value) extends AuctionQuery(sender, userId, auctionName)
+
+case class GetAuctionsList(override val sender: ActorRef[GeneralProtocol], override val userId: String) extends GeneralQuery(sender, userId)
 
 // response
 
@@ -40,3 +44,7 @@ case class MessageRejected(override val sender: ActorRef[GeneralProtocol], msg: 
 case class AuctionData(override val sender: ActorRef[GeneralProtocol], owner: String, title: String, startTime: Instant, endTime: Instant, lots: List[String]) extends GeneralProtocol(sender)
 
 case class AuctionStateMessage(override val sender: ActorRef[GeneralProtocol], name: String, state: AuctionState.Value) extends GeneralProtocol(sender)
+
+case class AuctionsList(override val sender: ActorRef[GeneralProtocol], auctions: List[String]) extends GeneralProtocol(sender)
+
+case class LotList(override val sender: ActorRef[GeneralProtocol], auctionName: String, lots: List[String]) extends GeneralProtocol(sender)

@@ -47,6 +47,9 @@ object AuctionActor {
                 sender ! LotNotFound(context.self, lotName)
             }
           Behaviors.same
+        case GetLotList(sender, _, _) =>
+          sender ! LotList(context.self, title, lots.keys.toList)
+          Behaviors.same
         case AlterAuction(sender, _, _, maybeStartTime, maybeEndTime) =>
           val curStartTime = maybeStartTime.getOrElse(startTime)
           val curEndTime = maybeEndTime.getOrElse(endTime)
@@ -90,6 +93,9 @@ object AuctionActor {
             case None =>
               sender ! LotNotFound(context.self, lotName)
           }
+          Behaviors.same
+        case GetLotList(sender, _, _) =>
+          sender ! LotList(context.self, title, lots.keys.toList)
           Behaviors.same
         case msg: GeneralProtocol if msg.isInstanceOf[AccessControl] =>
           checkAccess(owner, message, context) {
@@ -148,6 +154,9 @@ object AuctionActor {
             case None =>
               sender ! LotNotFound(context.self, lotName)
           }
+          Behaviors.same
+        case GetLotList(sender, _, _) =>
+          sender ! LotList(context.self, title, lots.keys.toList)
           Behaviors.same
         case msg: GeneralProtocol if msg.isInstanceOf[AccessControl] =>
           checkAccess(owner, message, context) {
@@ -208,6 +217,9 @@ object AuctionActor {
               sender ! LotNotFound(context.self, lotName)
           }
           Behaviors.same
+        case GetLotList(sender, _, _) =>
+          sender ! LotList(context.self, title, lots.keys.toList)
+          Behaviors.same
         case PlaceBid(sender, userId, _, lotName, bid) =>
           lots.get(lotName) match {
             case Some(lot) =>
@@ -256,6 +268,9 @@ object AuctionActor {
               sender ! LotNotFound(context.self, lotName)
           }
           Behaviors.same
+        case GetLotList(sender, _, _) =>
+          sender ! LotList(context.self, title, lots.keys.toList)
+          Behaviors.same
         case SetAuctionState(sender, userId, _, state) => state match {
           case _ if userId != owner =>
             sender ! AccessDenied(context.self)
@@ -290,6 +305,9 @@ object AuctionActor {
             case None =>
               sender ! LotNotFound(context.self, lotName)
           }
+          Behaviors.same
+        case GetLotList(sender, _, _) =>
+          sender ! LotList(context.self, title, lots.keys.toList)
           Behaviors.same
         case SetAuctionState(sender, userId, _, state) => state match {
           case _ if userId != owner =>
