@@ -7,7 +7,9 @@ import io.scalac.auction.models.Bid
 import io.scalac.auction.protocols._
 
 object LotActor {
-  Routees
+
+  val bidThreshold = 1.05
+
   def apply(): Behavior[GeneralProtocol] = Behaviors.receive { (context, message) =>
     message match {
       case CreateLot(sender, _, name, description) =>
@@ -15,6 +17,8 @@ object LotActor {
         closed(name, description)
       case msg: GeneralProtocol =>
         msg.sender ! InvalidActorState(context.self)
+        Behaviors.same
+      case _ =>
         Behaviors.same
     }
   }
@@ -47,6 +51,8 @@ object LotActor {
       case msg: GeneralProtocol =>
         msg.sender ! InvalidActorState(context.self)
         Behaviors.same
+      case _ =>
+        Behaviors.same
     }
   }
 
@@ -72,6 +78,8 @@ object LotActor {
       case msg: GeneralProtocol =>
         msg.sender ! InvalidActorState(context.self)
         Behaviors.same
+      case _ =>
+        Behaviors.same
     }
   }
 
@@ -85,8 +93,8 @@ object LotActor {
         Behaviors.same
       case PlaceBid(sender, _, _, bid) =>
         highestBid match {
-          case Some(highest) if bid.value <= highest.value =>
-            sender ! BidFailure(context.self, title)
+          case Some(highest) if bid.value <= highest.value * bidThreshold =>
+            sender ! BidTooLow(context.self, title)
             Behaviors.same
           case _ =>
             sender ! BidSuccess(context.self, title, bid)
@@ -102,6 +110,8 @@ object LotActor {
       }
       case msg: GeneralProtocol =>
         msg.sender ! InvalidActorState(context.self)
+        Behaviors.same
+      case _ =>
         Behaviors.same
     }
   }
@@ -119,6 +129,8 @@ object LotActor {
         Behaviors.same
       case msg: GeneralProtocol =>
         msg.sender ! InvalidActorState(context.self)
+        Behaviors.same
+      case _ =>
         Behaviors.same
     }
   }

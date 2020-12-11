@@ -17,7 +17,7 @@ case class SetLotState(override val sender: ActorRef[GeneralProtocol], state: Lo
 case class LotStateMessage(override val sender: ActorRef[GeneralProtocol], state: LotState.Value) extends LotProtocol(sender)
 
 case class BidSuccess(override val sender: ActorRef[GeneralProtocol], lotName: String, bid: Bid) extends LotProtocol(sender)
-case class BidFailure(override val sender: ActorRef[GeneralProtocol], lotName: String) extends LotProtocol(sender)
+case class BidTooLow(override val sender: ActorRef[GeneralProtocol], lotName: String) extends LotProtocol(sender)
 
 object LotState extends Enumeration {
   type LotState = Value

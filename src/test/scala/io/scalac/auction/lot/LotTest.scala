@@ -89,7 +89,7 @@ class LotTest
     probe.expectMessage(BidSuccess(lotActor, "test1", bid1))
 
     lotActor ! PlaceBid(probe.ref, "0", "test1", Bid("b", 5))
-    probe.expectMessage(BidFailure(lotActor, "test1"))
+    probe.expectMessage(BidTooLow(lotActor, "test1"))
 
     lotActor ! PlaceBid(probe.ref, "0", "test1", bid2)
     probe.expectMessage(BidSuccess(lotActor, "test1", bid2))

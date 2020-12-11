@@ -39,17 +39,15 @@ object AuctionActor {
             unscheduled(owner, title, startTime, endTime, lots ++ Map(createLot.title -> lot))
           }
         case GetLotData(sender, userId, name) =>
-            lots.get(name) match {
-              case Some(lot) =>
-                lot ! GetLotData(sender, userId, name)
-              case None =>
-                sender ! LotNotFound(context.self, name)
-            }
+          lots.get(name) match {
+            case Some(lot) =>
+              lot ! GetLotData(sender, userId, name)
+            case None =>
+              sender ! LotNotFound(context.self, name)
+          }
           Behaviors.same
         case AlterAuction(sender, _, maybeTitle, maybeStartTime, maybeEndTime) =>
-          val curTitle = maybeTitle.getOrElse(title)
-          val curStartTime = maybeStartTime.getOrElse(startTime)
-          val curEndTime = maybeEndTime.getOrElse(endTime)
+          val (curTitle: String, curStartTime: Instant, curEndTime: Instant) = updateAuctionData(title, startTime, endTime, maybeTitle, maybeStartTime, maybeEndTime)
           sender ! AuctionData(context.self, owner, curTitle, curStartTime, curEndTime, lots.keys.toList)
           unscheduled(owner, curTitle, curStartTime, curEndTime, lots)
         case SetAuctionState(sender, _, state) => state match {
@@ -94,9 +92,8 @@ object AuctionActor {
         case msg: GeneralProtocol if msg.isInstanceOf[AccessControl] =>
           checkAccess(owner, message, context) {
             case AlterAuction(sender, _, maybeTitle, maybeStartTime, maybeEndTime) =>
-              val curTitle = maybeTitle.getOrElse(title)
-              val curStartTime = maybeStartTime.getOrElse(startTime)
-              val curEndTime = maybeEndTime.getOrElse(endTime)
+              val (curTitle: String, curStartTime: Instant, curEndTime: Instant) =
+                updateAuctionData(title, startTime, endTime, maybeTitle, maybeStartTime, maybeEndTime)
               sender ! AuctionData(context.self, owner, curTitle, curStartTime, curEndTime, lots.keys.toList)
               unscheduled(owner, curTitle, curStartTime, curEndTime, lots)
             case createLot: CreateLot =>
@@ -153,9 +150,7 @@ object AuctionActor {
         case msg: GeneralProtocol if msg.isInstanceOf[AccessControl] =>
           checkAccess(owner, message, context) {
             case AlterAuction(sender, userId, maybeTitle, maybeStartTime, maybeEndTime) =>
-              val curTitle = maybeTitle.getOrElse(title)
-              val curStartTime = maybeStartTime.getOrElse(startTime)
-              val curEndTime = maybeEndTime.getOrElse(endTime)
+              val (curTitle: String, curStartTime: Instant, curEndTime: Instant) = updateAuctionData(title, startTime, endTime, maybeTitle, maybeStartTime, maybeEndTime)
               sender ! AuctionData(context.self, owner, curTitle, curStartTime, curEndTime, lots.keys.toList)
               unscheduled(owner, curTitle, curStartTime, curEndTime, lots)
             case createLot: CreateLot =>
@@ -306,5 +301,12 @@ object AuctionActor {
           Behaviors.same
       }
     }
+
+  private def updateAuctionData(title: String, startTime: Instant, endTime: Instant, maybeTitle: Option[String], maybeStartTime: Option[Instant], maybeEndTime: Option[Instant]) = {
+    val curTitle = maybeTitle.getOrElse(title)
+    val curStartTime = maybeStartTime.getOrElse(startTime)
+    val curEndTime = maybeEndTime.getOrElse(endTime)
+    (curTitle, curStartTime, curEndTime)
+  }
 
 }
