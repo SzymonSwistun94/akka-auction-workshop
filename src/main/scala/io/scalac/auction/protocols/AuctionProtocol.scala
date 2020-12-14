@@ -4,30 +4,43 @@ import java.time.Instant
 
 import akka.actor.typed.ActorRef
 
-sealed class AuctionProtocol(sender: ActorRef[GeneralProtocol]) extends GeneralProtocol(sender)
-sealed class AuctionQuery(sender: ActorRef[GeneralProtocol], override val userId: String) extends AuctionProtocol(sender) with AccessControl
+sealed trait AuctionProtocol extends GeneralProtocol
+
+sealed trait AuctionQuery extends AuctionProtocol with AccessControl
 
 // query
 
-case class GetAuctionData(override val sender: ActorRef[GeneralProtocol], override val userId: String) extends AuctionQuery(sender, userId)
-case class GetAuctionState(override val sender: ActorRef[GeneralProtocol], override val userId: String) extends AuctionQuery(sender, userId)
-case class AlterAuction(override val sender: ActorRef[GeneralProtocol], override val userId: String, title: Option[String] = None, startTime: Option[Instant] = None, endTime: Option[Instant] = None) extends AuctionQuery(sender, userId)
-case class SetAuctionState(override val sender: ActorRef[GeneralProtocol], override val userId: String, state: AuctionState.Value) extends AuctionQuery(sender, userId)
+final case class GetAuctionData(override val sender: ActorRef[GeneralProtocol], override val userId: String) extends AuctionQuery
+
+final case class GetAuctionState(override val sender: ActorRef[GeneralProtocol], override val userId: String) extends AuctionQuery
+
+final case class AlterAuction(override val sender: ActorRef[GeneralProtocol], override val userId: String, title: Option[String] = None, startTime: Option[Instant] = None, endTime: Option[Instant] = None) extends AuctionQuery
+
+final case class SetAuctionState(override val sender: ActorRef[GeneralProtocol], override val userId: String, state: AuctionState) extends AuctionQuery
 
 // response
 
-case class AuctionData(override val sender: ActorRef[GeneralProtocol], owner: String, title: String, startTime: Instant, endTime: Instant, lots: List[String]) extends AuctionProtocol(sender)
-case class AuctionStateMessage(override val sender: ActorRef[GeneralProtocol], state: AuctionState.Value) extends AuctionProtocol(sender)
-case class LotCreated(override val sender: ActorRef[GeneralProtocol], lotTitle: String) extends AuctionProtocol(sender)
+final case class AuctionData(override val sender: ActorRef[GeneralProtocol], owner: String, title: String, startTime: Instant, endTime: Instant, lots: List[String]) extends AuctionProtocol
 
-object AuctionState extends Enumeration {
-  type AuctionState = Value
+final case class AuctionStateMessage(override val sender: ActorRef[GeneralProtocol], state: AuctionState) extends AuctionProtocol
 
-  val UNSCHEDULED, // -> SCHEDULED, IN_PREVIEW, IN_PROGRESS
-  SCHEDULED, // -> IN_PREVIEW, IN_PROGRESS
-  IN_PREVIEW, // -> SCHEDULED, IN_PROGRESS
-  IN_PROGRESS, // -> NEAD_END, FINISHED
-  NEAR_END, // -> FINISHED
-  FINISHED // -> ()
-  = Value
+final case class LotCreated(override val sender: ActorRef[GeneralProtocol], lotTitle: String) extends AuctionProtocol
+
+sealed abstract class AuctionState(val legalStates: Set[AuctionState]) extends Product with Serializable
+
+object AuctionState {
+
+  final case object Unscheduled extends AuctionState(Set(Scheduled, InPreview, InProgress))
+
+  final case object Scheduled extends AuctionState(Set(InPreview, InProgress))
+
+  final case object InPreview extends AuctionState(Set(Scheduled, InProgress))
+
+  final case object InProgress extends AuctionState(Set(NearEnd, Finished))
+
+  final case object NearEnd extends AuctionState(Set(Finished))
+
+  final case object Finished extends AuctionState(Set())
+
+  val values = Set(Unscheduled, Scheduled, InPreview, InProgress, NearEnd, Finished)
 }

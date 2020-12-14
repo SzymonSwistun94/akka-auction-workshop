@@ -4,7 +4,7 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import io.scalac.auction.protocols.{AccessControl, AccessDenied, GeneralProtocol}
 
-object SecureUtils {
+object SecurityUtils {
 
   def checkAccess[T](owner: String, message: GeneralProtocol, context: ActorContext[GeneralProtocol])(body: GeneralProtocol => Behavior[T]): Behavior[T] = {
     message match {

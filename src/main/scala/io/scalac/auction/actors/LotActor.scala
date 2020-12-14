@@ -13,7 +13,7 @@ object LotActor {
   def apply(): Behavior[GeneralProtocol] = Behaviors.receive { (context, message) =>
     message match {
       case CreateLot(sender, _, name, description) =>
-        sender ! LotStateMessage(context.self, LotState.CLOSED)
+        sender ! LotStateMessage(context.self, LotState.Closed)
         closed(name, description)
       case msg: GeneralProtocol =>
         msg.sender ! InvalidActorState(context.self)
@@ -32,17 +32,17 @@ object LotActor {
         sender ! LotData(context.self, curTitle, curDescription)
         Behaviors.same
       case GetLotState(sender) =>
-        sender ! LotStateMessage(context.self, LotState.CLOSED)
+        sender ! LotStateMessage(context.self, LotState.Closed)
         Behaviors.same
       case GetLotData(sender, _, _) =>
         sender ! LotData(context.self, title, description)
         Behaviors.same
       case SetLotState(sender, state) => state match {
-        case LotState.IN_PREVIEW =>
-          sender ! LotStateMessage(context.self, LotState.IN_PREVIEW)
+        case LotState.InPreview =>
+          sender ! LotStateMessage(context.self, LotState.InPreview)
           inPreview(title, description)
-        case LotState.OPEN =>
-          sender ! LotStateMessage(context.self, LotState.OPEN)
+        case LotState.Open =>
+          sender ! LotStateMessage(context.self, LotState.Open)
           open(title, description, None)
         case _ =>
           sender ! InvalidStateTransition(context.self)
@@ -59,17 +59,17 @@ object LotActor {
   def inPreview(title: String, description: String): Behavior[GeneralProtocol] = Behaviors.receive { (context, message) =>
     message match {
       case GetLotState(sender) =>
-        sender ! LotStateMessage(context.self, LotState.IN_PREVIEW)
+        sender ! LotStateMessage(context.self, LotState.InPreview)
         Behaviors.same
       case GetLotData(sender, _, _) =>
         sender ! LotData(context.self, title, description)
         Behaviors.same
       case SetLotState(sender, state) => state match {
-        case LotState.CLOSED =>
-          sender ! LotStateMessage(context.self, LotState.CLOSED)
+        case LotState.Closed =>
+          sender ! LotStateMessage(context.self, LotState.Closed)
           closed(title, description)
-        case LotState.OPEN =>
-          sender ! LotStateMessage(context.self, LotState.OPEN)
+        case LotState.Open =>
+          sender ! LotStateMessage(context.self, LotState.Open)
           open(title, description, None)
         case _ =>
           sender ! InvalidStateTransition(context.self)
@@ -86,7 +86,7 @@ object LotActor {
   def open(title: String, description: String, highestBid: Option[Bid]): Behavior[GeneralProtocol] = Behaviors.receive { (context, message) =>
     message match {
       case GetLotState(sender) =>
-        sender ! LotStateMessage(context.self, LotState.OPEN)
+        sender ! LotStateMessage(context.self, LotState.Open)
         Behaviors.same
       case GetLotData(sender, _, _) =>
         sender ! LotData(context.self, title, description, highestBid)
@@ -101,8 +101,8 @@ object LotActor {
             open(title, description, Some(bid))
         }
       case SetLotState(sender, state) => state match {
-        case LotState.FINISHED =>
-          sender ! LotStateMessage(context.self, LotState.FINISHED)
+        case LotState.Finished =>
+          sender ! LotStateMessage(context.self, LotState.Finished)
           finished(title, description, highestBid)
         case _ =>
           sender ! InvalidStateTransition(context.self)
@@ -119,7 +119,7 @@ object LotActor {
   def finished(title: String, description: String, highestBid: Option[Bid]): Behavior[GeneralProtocol] = Behaviors.receive { (context, message) =>
     message match {
       case GetLotState(sender) =>
-        sender ! LotStateMessage(context.self, LotState.FINISHED)
+        sender ! LotStateMessage(context.self, LotState.Finished)
         Behaviors.same
       case GetLotData(sender, _, _) =>
         sender ! LotData(context.self, title, description, highestBid)

@@ -3,15 +3,16 @@ package io.scalac.auction.actors
 import java.time.Instant
 
 import akka.actor.typed.{ActorRef, Behavior}
-import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import io.scalac.auction.protocols._
-import io.scalac.auction.utils.SecureUtils._
+import io.scalac.auction.utils.ActorUtils._
+import io.scalac.auction.utils.SecurityUtils._
 
 object AuctionActor {
   def apply(): Behavior[GeneralProtocol] = Behaviors.receive { (context, message) =>
     message match {
       case CreateAuction(sender, _, owner, title, startTime, endTime) =>
-        sender ! AuctionStateMessage(context.self, AuctionState.UNSCHEDULED)
+        sender ! AuctionStateMessage(context.self, AuctionState.Unscheduled)
         unscheduled(owner, title, startTime, endTime, Map.empty)
       case msg: GeneralProtocol =>
         msg.sender ! InvalidActorState(context.self)
@@ -21,78 +22,52 @@ object AuctionActor {
 
   def unscheduled(owner: String, title: String, startTime: Instant, endTime: Instant, lots: Map[String, ActorRef[GeneralProtocol]]): Behavior[GeneralProtocol] =
     Behaviors.receive { (context, message) =>
+      val state = AuctionState.Unscheduled
+
       checkAccess(owner, message, context) {
-        case GetAuctionState(sender, _) =>
-          sender ! AuctionStateMessage(context.self, AuctionState.UNSCHEDULED)
-          Behaviors.same
-        case GetAuctionData(sender, _) =>
-          sender ! AuctionData(context.self, owner, title, startTime, endTime, lots.keys.toList)
-          Behaviors.same
         case createLot: CreateLot =>
           if (lots.keys.exists(_ == createLot.title)) {
             createLot.sender ! LotAlreadyExists(context.self, createLot.title)
             Behaviors.same
-          }
-          else {
+          } else {
             val lot = context.spawn(LotActor(), createLot.title)
             lot ! createLot
             unscheduled(owner, title, startTime, endTime, lots ++ Map(createLot.title -> lot))
           }
-        case GetLotData(sender, userId, name) =>
-          lots.get(name) match {
-            case Some(lot) =>
-              lot ! GetLotData(sender, userId, name)
-            case None =>
-              sender ! LotNotFound(context.self, name)
-          }
-          Behaviors.same
-        case AlterAuction(sender, _, maybeTitle, maybeStartTime, maybeEndTime) =>
-          val (curTitle: String, curStartTime: Instant, curEndTime: Instant) = updateAuctionData(title, startTime, endTime, maybeTitle, maybeStartTime, maybeEndTime)
-          sender ! AuctionData(context.self, owner, curTitle, curStartTime, curEndTime, lots.keys.toList)
-          unscheduled(owner, curTitle, curStartTime, curEndTime, lots)
         case SetAuctionState(sender, _, state) => state match {
-          case AuctionState.SCHEDULED =>
+          case AuctionState.Scheduled =>
             sender ! AuctionStateMessage(context.self, state)
             scheduled(owner, title, startTime, endTime, lots)
-          case AuctionState.IN_PREVIEW =>
+          case AuctionState.InPreview =>
             sender ! AuctionStateMessage(context.self, state)
-            lots.values.foreach(_ ! SetLotState(sender, LotState.IN_PREVIEW))
+            lots.values.foreach(_ ! SetLotState(sender, LotState.InPreview))
             inPreview(owner, title, startTime, endTime, lots)
-          case AuctionState.IN_PROGRESS =>
+          case AuctionState.InProgress =>
             sender ! AuctionStateMessage(context.self, state)
-            lots.values.foreach(_ ! SetLotState(sender, LotState.OPEN))
+            lots.values.foreach(_ ! SetLotState(sender, LotState.Open))
             inProgress(owner, title, startTime, endTime, lots)
           case _ =>
             sender ! InvalidStateTransition(context.self)
             Behaviors.same
         }
+        case AlterAuction(sender, _, maybeTitle, maybeStartTime, maybeEndTime) =>
+          val (curTitle, curStartTime, curEndTime) = updateAuctionData(title, startTime, endTime, maybeTitle, maybeStartTime, maybeEndTime)
+          sender ! AuctionData(context.self, owner, curTitle, curStartTime, curEndTime, lots.keys.toList)
+          unscheduled(owner, curTitle, curStartTime, curEndTime, lots)
         case msg: GeneralProtocol =>
-          msg.sender ! InvalidActorState(context.self)
-          Behaviors.same
+          common(msg, owner, title, startTime, endTime, lots, state, context)
       }
     }
 
   def scheduled(owner: String, title: String, startTime: Instant, endTime: Instant, lots: Map[String, ActorRef[GeneralProtocol]]): Behavior[GeneralProtocol] =
     Behaviors.receive { (context, message) =>
+      val state = AuctionState.Scheduled
+
       message match {
-        case GetAuctionState(sender, _) =>
-          sender ! AuctionStateMessage(context.self, AuctionState.SCHEDULED)
-          Behaviors.same
-        case GetAuctionData(sender, _) =>
-          sender ! AuctionData(context.self, owner, title, startTime, endTime, lots.keys.toList)
-          Behaviors.same
-        case GetLotData(sender, userId, name) =>
-          lots.get(name) match {
-            case Some(lot) =>
-              lot ! GetLotData(sender, userId, name)
-            case None =>
-              sender ! LotNotFound(context.self, name)
-          }
-          Behaviors.same
         case msg: GeneralProtocol if msg.isInstanceOf[AccessControl] =>
           checkAccess(owner, message, context) {
             case AlterAuction(sender, _, maybeTitle, maybeStartTime, maybeEndTime) =>
-              val (curTitle: String, curStartTime: Instant, curEndTime: Instant) =
+              val (curTitle, curStartTime, curEndTime) =
                 updateAuctionData(title, startTime, endTime, maybeTitle, maybeStartTime, maybeEndTime)
               sender ! AuctionData(context.self, owner, curTitle, curStartTime, curEndTime, lots.keys.toList)
               unscheduled(owner, curTitle, curStartTime, curEndTime, lots)
@@ -100,21 +75,20 @@ object AuctionActor {
               if (lots.keys.exists(_ == createLot.title)) {
                 createLot.sender ! LotNotFound(context.self, createLot.title)
                 Behaviors.same
-              }
-              else {
+              } else {
                 val lot = context.spawn(LotActor(), createLot.title)
                 lot ! createLot
                 createLot.sender ! LotCreated(context.self, createLot.title)
                 unscheduled(owner, title, startTime, endTime, lots ++ Map(createLot.title -> lot))
               }
-            case SetAuctionState(sender, userId, state) => state match {
-              case AuctionState.IN_PREVIEW =>
+            case SetAuctionState(sender, _, state) => state match {
+              case AuctionState.InPreview =>
                 sender ! AuctionStateMessage(context.self, state)
-                lots.values.foreach(_ ! SetLotState(sender, LotState.IN_PREVIEW))
+                lots.values.foreach(_ ! SetLotState(sender, LotState.InPreview))
                 inPreview(owner, title, startTime, endTime, lots)
-              case AuctionState.IN_PROGRESS =>
+              case AuctionState.InProgress =>
                 sender ! AuctionStateMessage(context.self, state)
-                lots.values.foreach(_ ! SetLotState(sender, LotState.OPEN))
+                lots.values.foreach(_ ! SetLotState(sender, LotState.Open))
                 inProgress(owner, title, startTime, endTime, lots)
               case _ =>
                 sender ! InvalidStateTransition(context.self)
@@ -124,55 +98,41 @@ object AuctionActor {
               message.sender ! InvalidActorState(context.self)
               Behaviors.same
           }
-        case _ =>
-          message.sender ! InvalidActorState(context.self)
-          Behaviors.same
+        case msg: GeneralProtocol =>
+          common(msg, owner, title, startTime, endTime, lots, state, context)
       }
     }
 
   def inPreview(owner: String, title: String, startTime: Instant, endTime: Instant, lots: Map[String, ActorRef[GeneralProtocol]]): Behavior[GeneralProtocol] =
     Behaviors.receive { (context, message) =>
+      val state = AuctionState.InPreview
+
       message match {
-        case GetAuctionState(sender, userId) =>
-          sender ! AuctionStateMessage(context.self, AuctionState.IN_PREVIEW)
-          Behaviors.same
-        case GetAuctionData(sender, userId) =>
-          sender ! AuctionData(context.self, owner, title, startTime, endTime, lots.keys.toList)
-          Behaviors.same
-        case GetLotData(sender, userId, name) =>
-          lots.get(name) match {
-            case Some(lot) =>
-              lot ! GetLotData(sender, userId, name)
-            case None =>
-              sender ! LotNotFound(context.self, name)
-          }
-          Behaviors.same
         case msg: GeneralProtocol if msg.isInstanceOf[AccessControl] =>
           checkAccess(owner, message, context) {
-            case AlterAuction(sender, userId, maybeTitle, maybeStartTime, maybeEndTime) =>
-              val (curTitle: String, curStartTime: Instant, curEndTime: Instant) = updateAuctionData(title, startTime, endTime, maybeTitle, maybeStartTime, maybeEndTime)
+            case AlterAuction(sender, _, maybeTitle, maybeStartTime, maybeEndTime) =>
+              val (curTitle, curStartTime, curEndTime) = updateAuctionData(title, startTime, endTime, maybeTitle, maybeStartTime, maybeEndTime)
               sender ! AuctionData(context.self, owner, curTitle, curStartTime, curEndTime, lots.keys.toList)
               unscheduled(owner, curTitle, curStartTime, curEndTime, lots)
             case createLot: CreateLot =>
               if (lots.keys.exists(_ == createLot.title)) {
                 createLot.sender ! LotAlreadyExists(context.self, createLot.title)
                 Behaviors.same
-              }
-              else {
+              } else {
                 val lot = context.spawn(LotActor(), createLot.title)
                 lot ! createLot
-                lot ! SetLotState(null, LotState.IN_PREVIEW)
+                lot ! SetLotState(noSender, LotState.InPreview)
                 createLot.sender ! LotCreated(context.self, createLot.title)
                 unscheduled(owner, title, startTime, endTime, lots ++ Map(createLot.title -> lot))
               }
-            case SetAuctionState(sender, userId, state) => state match {
-              case AuctionState.SCHEDULED =>
+            case SetAuctionState(sender, _, state) => state match {
+              case AuctionState.Scheduled =>
                 sender ! AuctionStateMessage(context.self, state)
-                lots.values.foreach(_ ! SetLotState(sender, LotState.CLOSED))
+                lots.values.foreach(_ ! SetLotState(sender, LotState.Closed))
                 scheduled(owner, title, startTime, endTime, lots)
-              case AuctionState.IN_PROGRESS =>
+              case AuctionState.InProgress =>
                 sender ! AuctionStateMessage(context.self, state)
-                lots.values.foreach(_ ! SetLotState(sender, LotState.OPEN))
+                lots.values.foreach(_ ! SetLotState(sender, LotState.Open))
                 inProgress(owner, title, startTime, endTime, lots)
               case _ =>
                 sender ! InvalidStateTransition(context.self)
@@ -182,29 +142,16 @@ object AuctionActor {
               message.sender ! InvalidActorState(context.self)
               Behaviors.same
           }
-        case _ =>
-          message.sender ! InvalidActorState(context.self)
-          Behaviors.same
+        case msg: GeneralProtocol =>
+          common(msg, owner, title, startTime, endTime, lots, state, context)
       }
     }
 
   def inProgress(owner: String, title: String, startTime: Instant, endTime: Instant, lots: Map[String, ActorRef[GeneralProtocol]]): Behavior[GeneralProtocol] =
     Behaviors.receive { (context, message) =>
+      val state = AuctionState.InProgress
+
       message match {
-        case GetAuctionState(sender, userId) =>
-          sender ! AuctionStateMessage(context.self, AuctionState.IN_PROGRESS)
-          Behaviors.same
-        case GetAuctionData(sender, userId) =>
-          sender ! AuctionData(context.self, owner, title, startTime, endTime, lots.keys.toList)
-          Behaviors.same
-        case GetLotData(sender, userId, name) =>
-          lots.get(name) match {
-            case Some(lot) =>
-              lot ! GetLotData(sender, name, userId)
-            case None =>
-              sender ! LotNotFound(context.self, name)
-          }
-          Behaviors.same
         case PlaceBid(sender, userId, lotName, bid) =>
           lots.get(lotName) match {
             case Some(lot) =>
@@ -218,76 +165,49 @@ object AuctionActor {
             case _ if userId != owner =>
               sender ! AccessDenied(context.self)
               Behaviors.same
-            case AuctionState.NEAR_END =>
+            case AuctionState.NearEnd =>
               sender ! AuctionStateMessage(context.self, state)
               nearEnd(owner, title, startTime, endTime, lots)
-            case AuctionState.FINISHED =>
+            case AuctionState.Finished =>
               sender ! AuctionStateMessage(context.self, state)
-              lots.values.foreach(_ ! SetLotState(sender, LotState.FINISHED))
+              lots.values.foreach(_ ! SetLotState(sender, LotState.Finished))
               finished(owner, title, startTime, endTime, lots)
             case _ =>
               sender ! InvalidStateTransition(context.self)
               Behaviors.same
           }
-
         case msg: GeneralProtocol =>
-          msg.sender ! InvalidActorState(context.self)
-          Behaviors.same
+          common(msg, owner, title, startTime, endTime, lots, state, context)
       }
     }
 
   def nearEnd(owner: String, title: String, startTime: Instant, endTime: Instant, lots: Map[String, ActorRef[GeneralProtocol]]): Behavior[GeneralProtocol] =
     Behaviors.receive { (context, message) =>
+      val state = AuctionState.NearEnd
+
       message match {
-        case GetAuctionState(sender, userId) =>
-          sender ! AuctionStateMessage(context.self, AuctionState.NEAR_END)
-          Behaviors.same
-        case GetAuctionData(sender, userId) =>
-          sender ! AuctionData(context.self, owner, title, startTime, endTime, lots.keys.toList)
-          Behaviors.same
-        case GetLotData(sender, userId, name) =>
-          lots.get(name) match {
-            case Some(lot) =>
-              lot ! GetLotData(sender, userId, name)
-            case None =>
-              sender ! LotNotFound(context.self, name)
-          }
-          Behaviors.same
         case SetAuctionState(sender, userId, state) => state match {
           case _ if userId != owner =>
             sender ! AccessDenied(context.self)
             Behaviors.same
-          case AuctionState.FINISHED =>
+          case AuctionState.Finished =>
             sender ! AuctionStateMessage(context.self, state)
-            lots.values.foreach(_ ! SetLotState(sender, LotState.FINISHED))
+            lots.values.foreach(_ ! SetLotState(sender, LotState.Finished))
             finished(owner, title, startTime, endTime, lots)
           case _ =>
             sender ! InvalidStateTransition(context.self)
             Behaviors.same
         }
         case msg: GeneralProtocol =>
-          msg.sender ! InvalidActorState(context.self)
-          Behaviors.same
+          common(msg, owner, title, startTime, endTime, lots, state, context)
       }
     }
 
   def finished(owner: String, title: String, startTime: Instant, endTime: Instant, lots: Map[String, ActorRef[GeneralProtocol]]): Behavior[GeneralProtocol] =
     Behaviors.receive { (context, message) =>
+      val state = AuctionState.Finished
+
       message match {
-        case GetAuctionState(sender, userId) =>
-          sender ! AuctionStateMessage(context.self, AuctionState.FINISHED)
-          Behaviors.same
-        case GetAuctionData(sender, userId) =>
-          sender ! AuctionData(context.self, owner, title, startTime, endTime, lots.keys.toList)
-          Behaviors.same
-        case GetLotData(sender, userId, name) =>
-          lots.get(name) match {
-            case Some(lot) =>
-              lot ! GetLotData(sender, userId, name)
-            case None =>
-              sender ! LotNotFound(context.self, name)
-          }
-          Behaviors.same
         case SetAuctionState(sender, userId, state) => state match {
           case _ if userId != owner =>
             sender ! AccessDenied(context.self)
@@ -297,16 +217,31 @@ object AuctionActor {
             Behaviors.same
         }
         case msg: GeneralProtocol =>
-          msg.sender ! InvalidActorState(context.self)
-          Behaviors.same
+          common(msg, owner, title, startTime, endTime, lots, state, context)
       }
     }
 
-  private def updateAuctionData(title: String, startTime: Instant, endTime: Instant, maybeTitle: Option[String], maybeStartTime: Option[Instant], maybeEndTime: Option[Instant]) = {
-    val curTitle = maybeTitle.getOrElse(title)
-    val curStartTime = maybeStartTime.getOrElse(startTime)
-    val curEndTime = maybeEndTime.getOrElse(endTime)
-    (curTitle, curStartTime, curEndTime)
+  private def updateAuctionData(title: String, startTime: Instant, endTime: Instant, maybeTitle: Option[String], maybeStartTime: Option[Instant], maybeEndTime: Option[Instant]) =
+    (maybeTitle.getOrElse(title), maybeStartTime.getOrElse(startTime), maybeEndTime.getOrElse(endTime))
+
+  private def common(message: GeneralProtocol, owner: String, title: String, startTime: Instant, endTime: Instant, lots: Map[String, ActorRef[GeneralProtocol]], state: AuctionState, context: ActorContext[GeneralProtocol]): Behavior[GeneralProtocol] = message match {
+    case GetAuctionState(sender, _) =>
+      sender ! AuctionStateMessage(context.self, state)
+      Behaviors.same
+    case GetAuctionData(sender, _) =>
+      sender ! AuctionData(context.self, owner, title, startTime, endTime, lots.keys.toList)
+      Behaviors.same
+    case GetLotData(sender, userId, name) =>
+      lots.get(name) match {
+        case Some(lot) =>
+          lot ! GetLotData(sender, userId, name)
+        case None =>
+          sender ! LotNotFound(context.self, name)
+      }
+      Behaviors.same
+    case msg: GeneralProtocol =>
+      msg.sender ! InvalidActorState(context.self)
+      Behaviors.same
   }
 
 }

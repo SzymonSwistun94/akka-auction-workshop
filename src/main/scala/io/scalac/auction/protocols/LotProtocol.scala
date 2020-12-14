@@ -3,28 +3,29 @@ package io.scalac.auction.protocols
 import akka.actor.typed.ActorRef
 import io.scalac.auction.models.Bid
 
-sealed class LotProtocol(sender: ActorRef[GeneralProtocol]) extends GeneralProtocol(sender)
+sealed trait LotProtocol extends GeneralProtocol
 
 // query
 
-case class GetLotState(override val sender: ActorRef[GeneralProtocol]) extends LotProtocol(sender)
+final case class GetLotState(override val sender: ActorRef[GeneralProtocol]) extends LotProtocol
 
-case class AlterLot(override val sender: ActorRef[GeneralProtocol], maybeTitle: Option[String] = None, maybeDescription: Option[String] = None) extends LotProtocol(sender)
-case class SetLotState(override val sender: ActorRef[GeneralProtocol], state: LotState.Value) extends LotProtocol(sender)
+final case class AlterLot(override val sender: ActorRef[GeneralProtocol], maybeTitle: Option[String] = None, maybeDescription: Option[String] = None) extends LotProtocol
+final case class SetLotState(override val sender: ActorRef[GeneralProtocol], state: LotState) extends LotProtocol
 
 // response
 
-case class LotStateMessage(override val sender: ActorRef[GeneralProtocol], state: LotState.Value) extends LotProtocol(sender)
+final case class LotStateMessage(override val sender: ActorRef[GeneralProtocol], state: LotState) extends LotProtocol
 
-case class BidSuccess(override val sender: ActorRef[GeneralProtocol], lotName: String, bid: Bid) extends LotProtocol(sender)
-case class BidTooLow(override val sender: ActorRef[GeneralProtocol], lotName: String) extends LotProtocol(sender)
+final case class BidSuccess(override val sender: ActorRef[GeneralProtocol], lotName: String, bid: Bid) extends LotProtocol
+final case class BidTooLow(override val sender: ActorRef[GeneralProtocol], lotName: String) extends LotProtocol
 
-object LotState extends Enumeration {
-  type LotState = Value
+sealed abstract class LotState(val legalStates: Set[LotState]) extends Product with Serializable
+object LotState {
 
-  val CLOSED, // -> IN_PREVIEW, OPEN
-  IN_PREVIEW, // -> CLOSED, OPEN
-  OPEN,       // -> FINISHED
-  FINISHED    // -> ()
-  = Value
+  final case object Closed extends LotState(Set(InPreview, Open))
+  final case object InPreview extends LotState(Set(Closed, Open))
+  final case object Open extends LotState(Set(Finished))
+  final case object Finished extends LotState(Set())
+
+  val values = Set(Closed, InPreview, Open, Finished)
 }

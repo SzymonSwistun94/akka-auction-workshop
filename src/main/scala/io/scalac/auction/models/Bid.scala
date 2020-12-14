@@ -1,3 +1,3 @@
 package io.scalac.auction.models
 
-case class Bid(userId: String, value: Double)
+final case class Bid(userId: String, value: Double)
