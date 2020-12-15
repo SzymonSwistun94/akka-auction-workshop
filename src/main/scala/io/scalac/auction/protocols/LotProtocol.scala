@@ -7,25 +7,65 @@ sealed trait LotProtocol extends GeneralProtocol
 
 // query
 
-final case class GetLotState(override val sender: ActorRef[GeneralProtocol]) extends LotProtocol
+final case class GetLotState(sender: ActorRef[GeneralProtocol])
+    extends LotProtocol
 
-final case class AlterLot(override val sender: ActorRef[GeneralProtocol], maybeTitle: Option[String] = None, maybeDescription: Option[String] = None) extends LotProtocol
-final case class SetLotState(override val sender: ActorRef[GeneralProtocol], state: LotState) extends LotProtocol
+final case class AlterLot(
+    sender: ActorRef[GeneralProtocol],
+    maybeTitle: Option[String] = None,
+    maybeDescription: Option[String] = None
+) extends LotProtocol
+
+final case class SetLotState(sender: ActorRef[GeneralProtocol], state: LotState)
+    extends LotProtocol
 
 // response
 
-final case class LotStateMessage(override val sender: ActorRef[GeneralProtocol], state: LotState) extends LotProtocol
+final case class LotStateMessage(
+    sender: ActorRef[GeneralProtocol],
+    state: LotState
+) extends LotProtocol
 
-final case class BidSuccess(override val sender: ActorRef[GeneralProtocol], lotName: String, bid: Bid) extends LotProtocol
-final case class BidTooLow(override val sender: ActorRef[GeneralProtocol], lotName: String) extends LotProtocol
+final case class BidSuccess(
+    sender: ActorRef[GeneralProtocol],
+    lotName: String,
+    bid: Bid
+) extends LotProtocol
 
-sealed abstract class LotState(val legalStates: Set[LotState]) extends Product with Serializable
+final case class BidTooLow(sender: ActorRef[GeneralProtocol], lotName: String)
+    extends LotProtocol
+
+// states
+
+sealed trait LotState extends Product with Serializable
+
 object LotState {
 
-  final case object Closed extends LotState(Set(InPreview, Open))
-  final case object InPreview extends LotState(Set(Closed, Open))
-  final case object Open extends LotState(Set(Finished))
-  final case object Finished extends LotState(Set())
+  /** [[Closed]] lot state
+    *
+    * Legal transitions: [[InPreview]], [[Open]]
+    */
+  final case object Closed extends LotState
 
-  val values = Set(Closed, InPreview, Open, Finished)
+  /** [[InPreview]] lot state
+    *
+    * Legal transitions: [[Closed]], [[Open]]
+    */
+  final case object InPreview extends LotState {
+    val allowedTransitions = Set(Closed, Open)
+  }
+
+  /** [[Open]] lot state
+    *
+    * Legal transitions: [[Finished]]
+    */
+  final case object Open extends LotState {
+    val allowedTransitions = Set(Finished)
+  }
+
+  /** [[Finished]] lot state
+    *
+    * Legal transitions: ()
+    */
+  final case object Finished extends LotState
 }
