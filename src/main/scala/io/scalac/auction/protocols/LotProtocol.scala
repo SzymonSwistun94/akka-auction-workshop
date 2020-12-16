@@ -22,7 +22,9 @@ final case class SetLotState(sender: ActorRef[GeneralProtocol], state: LotState)
 // response
 
 final case class LotStateMessage(
-    sender: ActorRef[GeneralProtocol], name: String, state: LotState
+    sender: ActorRef[GeneralProtocol],
+    name: String,
+    state: LotState
 ) extends LotProtocol
 
 final case class BidSuccess(

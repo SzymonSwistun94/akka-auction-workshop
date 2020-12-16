@@ -13,10 +13,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec._
 import io.scalac.auction.utils.TestUtils._
 
-class LotTest
-  extends AnyFlatSpec
-    with BeforeAndAfterAll
-    with Matchers {
+class LotTest extends AnyFlatSpec with BeforeAndAfterAll with Matchers {
   val testkit: ActorTestKit = ActorTestKit()
 
   override def afterAll(): Unit = {

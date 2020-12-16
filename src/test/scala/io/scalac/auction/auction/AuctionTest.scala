@@ -14,11 +14,9 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.language.postfixOps
 
-class AuctionTest
-  extends AnyFlatSpec
-    with BeforeAndAfterAll
-    with Matchers {
-  val testkit: ActorTestKit = ActorTestKit()
+class AuctionTest extends AnyFlatSpec with BeforeAndAfterAll with Matchers {
+  lazy val testkit: ActorTestKit = ActorTestKit()
+  lazy val log = testkit.system.log
 
   override def afterAll(): Unit = {
     testkit.shutdownTestKit()
@@ -47,6 +45,8 @@ class AuctionTest
   }
 
   it should "transition through valid states correctly" in {
+    import AuctionState._
+
     val probe = testkit.createTestProbe[GeneralProtocol]()
 
     val auctionActor1 = testkit.spawn(AuctionActor(), "auction1")
@@ -82,7 +82,9 @@ class AuctionTest
         Instant.now,
         Instant.now.plus(1, ChronoUnit.DAYS)
       ) ::
-        List(InProgress, Finished).map(SetAuctionState(probe.ref, "root", "test2", _))
+        List(InProgress, Finished).map(
+          SetAuctionState(probe.ref, "root", "test2", _)
+        )
     }
     testCallchain(
       probe,
@@ -114,7 +116,12 @@ class AuctionTest
       .receiveMessage()
       .asInstanceOf[LotStateMessage]
       .state shouldEqual LotState.Closed
-    auctionActor ! SetAuctionState(probe.ref, "root", "test", AuctionState.InProgress)
+    auctionActor ! SetAuctionState(
+      probe.ref,
+      "root",
+      "test",
+      AuctionState.InProgress
+    )
     probe.expectMessage(
       AuctionStateMessage(auctionActor, "test", AuctionState.InProgress)
     )
@@ -122,7 +129,13 @@ class AuctionTest
       .receiveMessage()
       .asInstanceOf[LotStateMessage]
       .state shouldEqual LotState.Open
-    auctionActor ! PlaceBid(probe.ref, "root", "test", "testLot", Bid("user", 1))
+    auctionActor ! PlaceBid(
+      probe.ref,
+      "root",
+      "test",
+      "testLot",
+      Bid("user", 1)
+    )
     probe.receiveMessage().asInstanceOf[BidSuccess].bid shouldEqual Bid(
       "user",
       1
@@ -144,16 +157,16 @@ class AuctionTest
       Instant.now.plus(1, ChronoUnit.DAYS)
     )
     probe.expectMessage(
-      AuctionStateMessage(auctionActor, AuctionState.Unscheduled)
+      AuctionStateMessage(auctionActor, "test", AuctionState.Unscheduled)
     )
-    auctionActor ! GetLotData(probe.ref, "root", "testLot")
+    auctionActor ! GetLotData(probe.ref, "root", "test", "testLot")
     probe.receiveMessage().asInstanceOf[LotNotFound].name shouldEqual "testLot"
-    auctionActor ! CreateLot(probe.ref, "root", "testLot", "test")
+    auctionActor ! CreateLot(probe.ref, "root", "test", "testLot", "test")
     probe
       .receiveMessage()
       .asInstanceOf[LotStateMessage]
       .state shouldEqual LotState.Closed
-    auctionActor ! CreateLot(probe.ref, "root", "testLot", "test")
+    auctionActor ! CreateLot(probe.ref, "root", "test", "testLot", "test")
     probe
       .receiveMessage()
       .asInstanceOf[LotAlreadyExists]
@@ -177,7 +190,12 @@ class AuctionTest
     probe.expectMessage(
       AuctionStateMessage(auctionActor, "test", AuctionState.Unscheduled)
     )
-    auctionActor ! SetAuctionState(probe.ref, "0", "test", AuctionState.InProgress)
+    auctionActor ! SetAuctionState(
+      probe.ref,
+      "0",
+      "test",
+      AuctionState.InProgress
+    )
     probe.expectMessage(AccessDenied(auctionActor))
 
     testkit.stop(auctionActor)

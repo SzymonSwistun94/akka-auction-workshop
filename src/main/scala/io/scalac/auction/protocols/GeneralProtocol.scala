@@ -34,8 +34,8 @@ final case class CreateLot(
     sender: ActorRef[GeneralProtocol],
     userId: String,
     auctionName: String,
-    title: String,
-    lotName: String
+    lotName: String,
+    description: String
 ) extends LotQuery
 
 final case class PlaceBid(
@@ -94,7 +94,6 @@ final case class GetAuctionsList(
 
 final case class LotData(
     sender: ActorRef[GeneralProtocol],
-    auctionName: String,
     lotName: String,
     description: String,
     maybeBid: Option[Bid] = None

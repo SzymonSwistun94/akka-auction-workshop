@@ -6,15 +6,20 @@ import java.time.temporal.ChronoUnit
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import io.scalac.auction.actors.OverseerActor
 import io.scalac.auction.models.Bid
-import io.scalac.auction.protocols.{AuctionState, BidSuccess, CreateAuction, CreateLot, GeneralProtocol, PlaceBid, SetAuctionState}
+import io.scalac.auction.protocols.{
+  AuctionState,
+  BidSuccess,
+  CreateAuction,
+  CreateLot,
+  GeneralProtocol,
+  PlaceBid,
+  SetAuctionState
+}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class OverseerTest
-  extends AnyFlatSpec
-    with BeforeAndAfterAll
-    with Matchers {
+class OverseerTest extends AnyFlatSpec with BeforeAndAfterAll with Matchers {
   val testkit: ActorTestKit = ActorTestKit()
 
   override def afterAll(): Unit = {
@@ -28,9 +33,16 @@ class OverseerTest
 
     val bid = Bid("1", 1)
     List(
-      CreateAuction(probe.ref, "0", "0", "test", Instant.now, Instant.now.plus(1, ChronoUnit.DAYS)),
+      CreateAuction(
+        probe.ref,
+        "0",
+        "0",
+        "test",
+        Instant.now,
+        Instant.now.plus(1, ChronoUnit.DAYS)
+      ),
       CreateLot(probe.ref, "0", "test", "testLot", "s"),
-      SetAuctionState(probe.ref, "0", "test", AuctionState.IN_PROGRESS),
+      SetAuctionState(probe.ref, "0", "test", AuctionState.InProgress),
       PlaceBid(probe.ref, "0", "test", "testLot", bid)
     ).foreach(overseer ! _)
 

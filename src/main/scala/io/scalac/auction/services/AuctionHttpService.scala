@@ -18,14 +18,23 @@ class AuctionHttpService(auctionService: AuctionService) {
     extractStrictEntity(1 second) { entity =>
       if (entity.contentType != ContentTypes.`application/json`) {
         complete(StatusCodes.BadRequest, "application/json expected")
-      }
-      else {
+      } else {
         import io.circe.parser._
         parse(entity.data.utf8String) match {
           case Right(json) =>
-            val startTime = json.hcursor.downField("startTime").success.map(_.as[Instant]).flatMap(_.toOption)
-            val endTime = json.hcursor.downField("endTime").success.map(_.as[Instant]).flatMap(_.toOption)
-            onSuccess(auctionService.editAuction(id, auctionName, startTime, endTime)) {
+            val startTime = json.hcursor
+              .downField("startTime")
+              .success
+              .map(_.as[Instant])
+              .flatMap(_.toOption)
+            val endTime = json.hcursor
+              .downField("endTime")
+              .success
+              .map(_.as[Instant])
+              .flatMap(_.toOption)
+            onSuccess(
+              auctionService.editAuction(id, auctionName, startTime, endTime)
+            ) {
               case Right(auction) =>
                 complete(StatusCodes.OK, auction)
               case Left(e) =>

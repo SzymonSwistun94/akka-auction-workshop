@@ -13,16 +13,26 @@ import scala.util.{Failure, Success}
 
 object Boot {
 
-  private def startHttpServer(route: Route, iface: String = "0.0.0.0", port: Int = 8080)(implicit system: ActorSystem[_]): Unit = {
+  private def startHttpServer(
+      route: Route,
+      iface: String = "0.0.0.0",
+      port: Int = 8080
+  )(implicit system: ActorSystem[_]): Unit = {
     import system.executionContext
 
     val fBinding = Http().newServerAt(iface, port).bind(route)
     fBinding.onComplete {
       case Success(binding) =>
         val address = binding.localAddress
-        println("Server online at http://{}:{}/", address.getHostString, address.getPort)
+        println(
+          "Server online at http://{}:{}/",
+          address.getHostString,
+          address.getPort
+        )
       case Failure(ex) =>
-        println(s"Failed to bind HTTP endpoint, terminating system: ${ex.getLocalizedMessage}")
+        println(
+          s"Failed to bind HTTP endpoint, terminating system: ${ex.getLocalizedMessage}"
+        )
         system.terminate()
     }
   }

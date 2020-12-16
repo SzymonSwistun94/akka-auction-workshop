@@ -28,30 +28,31 @@ object LotActor {
         case AlterLot(sender, _, maybeDescription) =>
           val curDescription = maybeDescription.getOrElse(description)
 
-        sender ! LotData(context.self, title, curDescription)
-        Behaviors.same
-      case GetLotState(sender) =>
-        sender ! LotStateMessage(context.self, title, LotState.Closed)
-        Behaviors.same
-      case GetLotData(sender, _, _, _) =>
-        sender ! LotData(context.self, title, description)
-        Behaviors.same
-      case SetLotState(sender, state) => state match {
-        case LotState.InPreview =>
-          sender ! LotStateMessage(context.self, title, LotState.InPreview)
-          inPreview(title, description)
-        case LotState.Open =>
-          sender ! LotStateMessage(context.self, title, LotState.Open)
-          open(title, description, None)
-        case _ =>
-          sender ! InvalidStateTransition(context.self)
+          sender ! LotData(context.self, title, curDescription)
+          Behaviors.same
+        case GetLotState(sender) =>
+          sender ! LotStateMessage(context.self, title, LotState.Closed)
+          Behaviors.same
+        case GetLotData(sender, _, _, _) =>
+          sender ! LotData(context.self, title, description)
+          Behaviors.same
+        case SetLotState(sender, state) =>
+          state match {
+            case LotState.InPreview =>
+              sender ! LotStateMessage(context.self, title, LotState.InPreview)
+              inPreview(title, description)
+            case LotState.Open =>
+              sender ! LotStateMessage(context.self, title, LotState.Open)
+              open(title, description, None)
+            case _ =>
+              sender ! InvalidStateTransition(context.self)
+              Behaviors.same
+          }
+        case msg: GeneralProtocol =>
+          msg.sender ! InvalidActorState(context.self)
           Behaviors.same
       }
-      case msg: GeneralProtocol =>
-        msg.sender ! InvalidActorState(context.self)
-        Behaviors.same
     }
-  }
 
   def inPreview(title: String, description: String): Behavior[GeneralProtocol] =
     Behaviors.receive { (context, message) =>

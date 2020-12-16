@@ -34,12 +34,18 @@ final case class LotNotFound(sender: ActorRef[GeneralProtocol], name: String)
   val code = StatusCodes.NotFound
 }
 
-final case class AuctionAlreadyExists(override val sender: ActorRef[GeneralProtocol], name: String) extends ErrorProtocol {
+final case class AuctionAlreadyExists(
+    override val sender: ActorRef[GeneralProtocol],
+    name: String
+) extends ErrorProtocol {
   val msg = "Auction already exists"
   val code = StatusCodes.Conflict
 }
 
-final case class AuctionNotFound(override val sender: ActorRef[GeneralProtocol], name: String) extends ErrorProtocol {
+final case class AuctionNotFound(
+    override val sender: ActorRef[GeneralProtocol],
+    name: String
+) extends ErrorProtocol {
   val msg = "Auction not found"
   val code = StatusCodes.NotFound
 }

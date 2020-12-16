@@ -1,6 +1,5 @@
 package io.scalac.auction.http
 
-
 import java.time.Instant
 
 import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
@@ -19,7 +18,7 @@ class ApiRoutes(auctionService: AuctionService) {
   val auctionHttpService = new AuctionHttpService(auctionService)
 
   def authenticate(cred: Credentials): Option[String] = cred match {
-    case Missing => None
+    case Missing              => None
     case Provided(identifier) => Some(identifier)
   }
 
@@ -30,19 +29,42 @@ class ApiRoutes(auctionService: AuctionService) {
           pathPrefix("lot") {
             pathPrefix(Segment) { lotName =>
               pathPrefix("bid") {
-                auctionHttpService.bidOnLot(id, auctionName, lotName) // GET /api/auction/<id>/lot/<id>/bid/?amount
-              } ~ auctionHttpService.getLot(id, auctionName, lotName) // GET /api/auction/<id>/lot/<id>/
+                auctionHttpService.bidOnLot(
+                  id,
+                  auctionName,
+                  lotName
+                ) // GET /api/auction/<id>/lot/<id>/bid/?amount
+              } ~ auctionHttpService.getLot(
+                id,
+                auctionName,
+                lotName
+              ) // GET /api/auction/<id>/lot/<id>/
             } ~ post {
-              auctionHttpService.createLot(id, auctionName) // POST /api/auction/<id>/lot/
+              auctionHttpService.createLot(
+                id,
+                auctionName
+              ) // POST /api/auction/<id>/lot/
             }
           } ~ pathPrefix("start") {
-            auctionHttpService.startAuction(id, auctionName) // GET /api/auction/<id>/start/
+            auctionHttpService.startAuction(
+              id,
+              auctionName
+            ) // GET /api/auction/<id>/start/
           } ~ pathPrefix("end") {
-            auctionHttpService.endAuction(id, auctionName) // GET /api/auction/<id>/end/
+            auctionHttpService.endAuction(
+              id,
+              auctionName
+            ) // GET /api/auction/<id>/end/
           } ~ post {
-            auctionHttpService.updateAuction(id, auctionName) // POST /api/auction/<id>/
+            auctionHttpService.updateAuction(
+              id,
+              auctionName
+            ) // POST /api/auction/<id>/
           } ~ get {
-            auctionHttpService.getAuction(id, auctionName) // GET /api/auction/<id>/
+            auctionHttpService.getAuction(
+              id,
+              auctionName
+            ) // GET /api/auction/<id>/
           }
         } ~ get {
           auctionHttpService.getAuctions(id) // GET /api/auction/
